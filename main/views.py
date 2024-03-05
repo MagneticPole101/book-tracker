@@ -7,10 +7,11 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 import datetime
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponseNotFound
 from django.urls import reverse
 from main.forms import BookForm
 from main.models import Book
+from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
 @login_required(login_url='/login')
@@ -60,6 +61,21 @@ def delete_book(request, id):
     book.delete()
     # Kembali ke halaman awal
     return HttpResponseRedirect(reverse('main:show_main'))
+
+@csrf_exempt
+def add_book_ajax(request):
+    if request.method == 'POST':
+        name = request.POST.get("name")
+        page = request.POST.get("page")
+        description = request.POST.get("description")
+        user = request.user
+
+        new_book = Book(name=name, page=page, description=description, user=user)
+        new_book.save()
+
+        return HttpResponse(b"CREATED", status=201)
+
+    return HttpResponseNotFound()
 
 def show_xml(request):
     data = Book.objects.all()
